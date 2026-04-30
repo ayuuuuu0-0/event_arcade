@@ -1,0 +1,57 @@
+server:
+  port: "8080"
+  environment: "local"
+
+redis:
+  clusterMode: false
+  hosts: "localhost:6379"
+
+mongodb:
+  debugMode: true
+  database: "event_arcade"
+  maxPoolSize: 20
+  master:
+    uri: "mongodb://localhost:27017/"
+  atlas:
+    search:
+      enabled: true
+  query:
+    print:
+      all: true
+      insert: false
+      find: false
+      update: false
+      delete: true
+      aggregate: true
+
+mongodm:
+  debugMode: true
+  database: "oms_service_db"
+  minPoolSize: 10
+  maxPoolSize: 20
+  maxConnIdleTime: 10s
+  writeConcern:
+    w: 1
+    j: false
+  enableWriteConcern: false
+  enableReadPref: false
+  defaultTimeout: 10s
+  master:
+    uri: "mongodb://localhost:27017/"
+  atlas:
+    search:
+      enabled: true
+  query:
+    print:
+      all: true
+      insert: true
+      find: true
+      update: true
+      delete: true
+      aggregate: true
+
+Actions:
+  hit: "18"
+  critical_hit: "5"
+  dodge: "8"
+  idle: "69"

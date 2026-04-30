@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/config/config.go">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/config/config.go" />
+              <option name="originalContent" value="package config&#10;" />
+              <option name="updatedContent" value="package config&#10;&#10;const (&#10;&#9;// Bot RNG Probabilities (out of 100)&#10;&#9;// Powerups are ignored for now, making the idle chance 69%&#10;&#9;BotChanceHit      = 18&#10;&#9;BotChanceDodge    = 8&#10;&#9;BotChanceCritical = 5&#10;)" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
