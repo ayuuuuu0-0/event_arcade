@@ -6,7 +6,12 @@ import type {
   GameEvent,
 } from "./types";
 
-const API = "http://localhost:8080";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+function wsURL(path: string): string {
+  const base = API.replace(/^http/, "ws");
+  return `${base}${path}`;
+}
 
 export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
   const res = await fetch(`${API}/leaderboard`);
@@ -53,7 +58,7 @@ export function connectLiveWS(
 
   function connect() {
     if (closed) return;
-    ws = new WebSocket("ws://localhost:8080/ws/live");
+    ws = new WebSocket(wsURL("/ws/live"));
     ws.onopen = () => onStatus(true);
     ws.onclose = () => {
       onStatus(false);
@@ -77,7 +82,7 @@ export function connectPlayerWS(
   onMessage: (data: Record<string, string>) => void,
   onStatus: (connected: boolean) => void
 ): { send: (msg: Record<string, string>) => void; close: () => void } {
-  const ws = new WebSocket("ws://localhost:8080/ws");
+  const ws = new WebSocket(wsURL("/ws"));
   ws.onopen = () => onStatus(true);
   ws.onclose = () => onStatus(false);
   ws.onmessage = (e) => {
