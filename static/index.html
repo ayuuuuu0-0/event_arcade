@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventArcade — Player Input</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;color:#0f0;font-family:'Courier New',monospace;padding:20px}
+h1{font-size:1.4em;margin-bottom:10px}
+.panel{border:1px solid #0f0;padding:12px;margin-bottom:12px;border-radius:4px}
+label{display:block;margin-bottom:4px;font-size:.85em;color:#0a0}
+input{background:#000;color:#0f0;border:1px solid #0f0;padding:6px 10px;width:100%;font-family:inherit;margin-bottom:8px}
+button{background:#0f0;color:#000;border:none;padding:8px 16px;font-family:inherit;font-weight:bold;cursor:pointer;margin:2px}
+button:hover{background:#0a0}
+button.action{background:#222;color:#0f0;border:1px solid #0f0}
+button.action:hover{background:#0f0;color:#000}
+#log{background:#000;border:1px solid #333;padding:10px;height:300px;overflow-y:auto;font-size:.8em;white-space:pre-wrap;line-height:1.4}
+.connected{color:#0f0}.disconnected{color:#f00}.error{color:#f44}.info{color:#ff0}
+</style>
+</head>
+<body>
+
+<h1>EventArcade — WebSocket Test</h1>
+
+<div class="panel">
+  <label>1. Create a player match</label>
+  <input id="playerID" placeholder="Your player ID (e.g. player_abc123)" value="player_abc123">
+  <button onclick="createMatch()">Create Match (Player vs Bot)</button>
+</div>
+
+<div class="panel">
+  <label>2. Connect WebSocket</label>
+  <button onclick="connectWS()">Connect</button>
+  <button onclick="disconnectWS()">Disconnect</button>
+  <span id="wsStatus" class="disconnected"> disconnected</span>
+</div>
+
+<div class="panel">
+  <label>3. Send actions (match must be running)</label>
+  <button class="action" onclick="send('hit')">Hit</button>
+  <button class="action" onclick="send('dodge')">Dodge</button>
+  <button class="action" onclick="send('critical_hit')">Crit</button>
+  <button class="action" onclick="send('powerup_spawn')">Powerup</button>
+  <button class="action" onclick="send('idle')">Idle</button>
+</div>
+
+<div class="panel">
+  <label>Event Log</label>
+  <div id="log"></div>
+</div>
+
+<script>
+let ws = null;
+let matchID = '';
+let playerID = '';
+
+function appendLog(msg, cls) {
+  const log = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = cls || '';
+  line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function createMatch() {
+  playerID = document.getElementById('playerID').value.trim();
+  if (!playerID) { appendLog('enter a player id', 'error'); return; }
+  try {
+    const res = await fetch('/match/create', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({mode:'player', player_id: playerID})
+    });
+    const data = await res.json();
+    if (data.error) { appendLog('error: ' + data.error, 'error'); return; }
+    matchID = data.match_id;
+    appendLog('match created: ' + matchID + ' (you=' + data.player_a + ' vs ' + data.player_b + ')', 'info');
+  } catch(e) { appendLog('fetch error: ' + e, 'error'); }
+}
+
+function connectWS() {
+  if (ws && ws.readyState === WebSocket.OPEN) { appendLog('already connected', 'info'); return; }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(proto + '//' + location.host + '/ws');
+  ws.onopen = () => { document.getElementById('wsStatus').textContent = ' connected'; document.getElementById('wsStatus').className = 'connected'; appendLog('ws connected', 'connected'); };
+  ws.onclose = () => { document.getElementById('wsStatus').textContent = ' disconnected'; document.getElementById('wsStatus').className = 'disconnected'; appendLog('ws disconnected', 'disconnected'); };
+  ws.onmessage = (e) => { appendLog('recv: ' + e.data, 'info'); };
+  ws.onerror = (e) => { appendLog('ws error', 'error'); };
+}
+
+function disconnectWS() { if (ws) ws.close(); }
+
+function send(action) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) { appendLog('not connected', 'error'); return; }
+  if (!matchID) { appendLog('create a match first', 'error'); return; }
+  const msg = JSON.stringify({match_id: matchID, player_id: playerID, action: action});
+  ws.send(msg);
+  appendLog('sent: ' + action, '');
+}
+</script>
+</body>
+</html>

@@ -50,8 +50,15 @@ mongodm:
       delete: true
       aggregate: true
 
-Actions:
-  hit: "18"
-  critical_hit: "5"
-  dodge: "8"
-  idle: "69"
+gameConfigs:
+  startinghp: 100 # Player HP at match start.
+  tickrate: 100ms # Match engine tick interval.
+  playeractiontimeout: 150ms # Timeout for human player input.
+  damagerange: [5, 15] # Min/max damage for a standard hit.
+  critmultiplier: 2.0 # Damage multiplier for critical hits.
+  weights: # Bot action probabilities (must sum to 100).
+    hit: 18
+    dodge: 8
+    criticalhit: 5
+    powerupspawn: 4
+    idle: 65

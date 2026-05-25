@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EventArcade — Dashboard</title>
+<style>
+:root{--bg:#0a0a0a;--panel:#111;--border:#222;--green:#0f0;--dim:#0a0;--yellow:#ff0;--red:#f44;--cyan:#0ff;--orange:#f80;--white:#eee}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--green);font-family:'Courier New',monospace;padding:12px;font-size:13px}
+h1{font-size:1.3em;color:var(--cyan);margin-bottom:8px;text-transform:uppercase;letter-spacing:2px}
+.grid{display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:auto 1fr;gap:10px;height:calc(100vh - 60px)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;overflow:hidden;display:flex;flex-direction:column}
+.panel-title{font-size:.75em;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+.metrics{grid-column:1/-1;display:flex;gap:10px}
+.metric{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center}
+.metric .value{font-size:1.8em;font-weight:bold;color:var(--cyan)}
+.metric .label{font-size:.7em;color:var(--dim);text-transform:uppercase;margin-top:2px}
+
+.leaderboard{grid-column:1;grid-row:2}
+.arena{grid-column:2;grid-row:2}
+.feed{grid-column:3;grid-row:2}
+
+table{width:100%;border-collapse:collapse;font-size:.8em}
+th{text-align:left;color:var(--dim);font-weight:normal;padding:3px 6px;border-bottom:1px solid var(--border)}
+td{padding:3px 6px}
+tr.highlight td{color:var(--yellow)}
+
+.scroll{overflow-y:auto;flex:1}
+
+.match-card{background:#0d0d0d;border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:6px}
+.match-id{font-size:.7em;color:var(--dim);margin-bottom:6px}
+.fighters{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.fighter{text-align:center;flex:1}
+.fighter-name{font-size:.75em;color:var(--white);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs{color:var(--dim);font-size:.8em;flex:0 0 30px;text-align:center}
+.hp-bar-outer{height:10px;background:#1a1a1a;border-radius:2px;overflow:hidden;margin-top:2px}
+.hp-bar-inner{height:100%;border-radius:2px;transition:width .3s ease}
+.hp-text{font-size:.65em;color:var(--dim);text-align:center;margin-top:1px}
+
+.evt-line{padding:2px 0;border-bottom:1px solid #1a1a1a;font-size:.75em;line-height:1.3}
+.evt-hit{color:var(--orange)}.evt-critical_hit{color:var(--red)}.evt-dodge{color:var(--cyan)}
+.evt-powerup_spawn{color:var(--yellow)}.evt-match_end{color:var(--green);font-weight:bold}
+
+.controls{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+button{background:var(--green);color:#000;border:none;padding:6px 14px;font-family:inherit;font-weight:bold;cursor:pointer;border-radius:2px;font-size:.8em}
+button:hover{background:var(--dim)}
+button.secondary{background:#222;color:var(--green);border:1px solid var(--green)}
+.status{font-size:.75em;margin-left:auto}
+.status.on{color:var(--green)}.status.off{color:var(--red)}
+</style>
+</head>
+<body>
+
+<h1>EventArcade Dashboard</h1>
+
+<div class="grid">
+  <div class="metrics">
+    <div class="metric"><div class="value" id="mActiveMatches">0</div><div class="label">Active Matches</div></div>
+    <div class="metric"><div class="value" id="mTotalEvents">0</div><div class="label">Total Events</div></div>
+    <div class="metric"><div class="value" id="mEventsPerSec">0</div><div class="label">Events / sec</div></div>
+    <div class="metric"><div class="value" id="mChainBlocks">0</div><div class="label">Chain Blocks</div></div>
+  </div>
+
+  <div class="panel leaderboard">
+    <div class="panel-title">Leaderboard</div>
+    <div class="scroll">
+      <table><thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead><tbody id="lbBody"></tbody></table>
+    </div>
+  </div>
+
+  <div class="panel arena">
+    <div class="panel-title">Live Matches</div>
+    <div class="scroll" id="arenaContainer"></div>
+  </div>
+
+  <div class="panel feed">
+    <div class="panel-title">Event Stream</div>
+    <div class="scroll" id="feedContainer"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="spawnMatch()">+ Bot Match</button>
+    <button class="secondary" onclick="spawnBatch()">+ 5 Matches</button>
+    <span class="status" id="wsStatus">connecting...</span>
+  </div>
+</div>
+
+<script>
+const MAX_FEED = 200;
+const LEADERBOARD_POLL = 2000;
+const STATS_POLL = 1000;
+
+const matches = {};
+let ws = null;
+let feedCount = 0;
+
+function el(id) { return document.getElementById(id); }
+
+function connectLive() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(proto + '//' + location.host + '/ws/live');
+  ws.onopen = () => { el('wsStatus').textContent = 'LIVE'; el('wsStatus').className = 'status on'; };
+  ws.onclose = () => { el('wsStatus').textContent = 'DISCONNECTED'; el('wsStatus').className = 'status off'; setTimeout(connectLive, 2000); };
+  ws.onerror = () => {};
+  ws.onmessage = (e) => {
+    try { handleEvent(JSON.parse(e.data)); } catch(err) {}
+  };
+}
+
+function handleEvent(evt) {
+  addFeedLine(evt);
+  const mid = evt.match_id;
+  if (!mid) return;
+
+  if (!matches[mid]) {
+    matches[mid] = { id: mid, players: {}, ended: false };
+  }
+  const m = matches[mid];
+  const p = evt.payload || {};
+
+  if (evt.type === 'hit' || evt.type === 'critical_hit') {
+    const atk = p.attacker || '';
+    const tgt = p.target || '';
+    if (atk && !m.players[atk]) m.players[atk] = { hp: 100 };
+    if (tgt) {
+      if (!m.players[tgt]) m.players[tgt] = { hp: 100 };
+      m.players[tgt].hp = typeof p.target_hp === 'number' ? p.target_hp : m.players[tgt].hp;
+    }
+  } else if (evt.type === 'dodge' || evt.type === 'powerup_spawn') {
+    const pid = p.player_id || '';
+    if (pid && !m.players[pid]) m.players[pid] = { hp: 100 };
+  } else if (evt.type === 'match_end') {
+    m.ended = true;
+    setTimeout(() => { delete matches[mid]; renderArena(); }, 4000);
+  }
+  renderArena();
+}
+
+function addFeedLine(evt) {
+  const container = el('feedContainer');
+  const line = document.createElement('div');
+  line.className = 'evt-line evt-' + evt.type;
+  const p = evt.payload || {};
+  let text = evt.type;
+  if (evt.type === 'hit' || evt.type === 'critical_hit') {
+    text = `${p.attacker} → ${p.target}  dmg:${p.damage}  hp:${p.target_hp}`;
+    if (evt.type === 'critical_hit') text = 'CRIT ' + text;
+  } else if (evt.type === 'dodge') {
+    text = `${p.player_id} dodged`;
+  } else if (evt.type === 'powerup_spawn') {
+    text = `${p.player_id} powerup!`;
+  } else if (evt.type === 'match_end') {
+    text = `MATCH END  winner:${p.winner}`;
+  }
+  const mid = (evt.match_id || '').slice(-6);
+  line.textContent = `[${mid}] ${text}`;
+  container.prepend(line);
+  feedCount++;
+  while (feedCount > MAX_FEED && container.lastChild) { container.removeChild(container.lastChild); feedCount--; }
+}
+
+function renderArena() {
+  const container = el('arenaContainer');
+  container.innerHTML = '';
+  const ids = Object.keys(matches);
+  if (ids.length === 0) { container.innerHTML = '<div style="color:var(--dim);text-align:center;padding:40px">No active matches</div>'; return; }
+  for (const mid of ids) {
+    const m = matches[mid];
+    const pids = Object.keys(m.players);
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    if (m.ended) card.style.borderColor = 'var(--green)';
+
+    let html = `<div class="match-id">${mid}</div><div class="fighters">`;
+    if (pids.length >= 2) {
+      html += fighterHTML(pids[0], m.players[pids[0]].hp);
+      html += '<div class="vs">VS</div>';
+      html += fighterHTML(pids[1], m.players[pids[1]].hp);
+    } else if (pids.length === 1) {
+      html += fighterHTML(pids[0], m.players[pids[0]].hp);
+      html += '<div class="vs">VS</div><div class="fighter"><div class="fighter-name">???</div></div>';
+    }
+    html += '</div>';
+    if (m.ended) html += '<div style="text-align:center;color:var(--green);font-size:.75em;margin-top:4px">FINISHED</div>';
+    card.innerHTML = html;
+    container.appendChild(card);
+  }
+}
+
+function fighterHTML(name, hp) {
+  const pct = Math.max(0, Math.min(100, hp));
+  let color = 'var(--green)';
+  if (pct < 30) color = 'var(--red)';
+  else if (pct < 60) color = 'var(--orange)';
+  const short = name.length > 14 ? name.slice(0, 14) + '…' : name;
+  return `<div class="fighter">
+    <div class="fighter-name">${short}</div>
+    <div class="hp-bar-outer"><div class="hp-bar-inner" style="width:${pct}%;background:${color}"></div></div>
+    <div class="hp-text">${hp} HP</div>
+  </div>`;
+}
+
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch('/leaderboard');
+    const data = await res.json();
+    const tbody = el('lbBody');
+    tbody.innerHTML = '';
+    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="color:var(--dim)">no data</td></tr>'; return; }
+    data.slice(0, 20).forEach((e, i) => {
+      const tr = document.createElement('tr');
+      if (i === 0) tr.className = 'highlight';
+      tr.innerHTML = `<td>${i+1}</td><td>${e.player_id}</td><td>${e.score}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {}
+}
+
+async function fetchStats() {
+  try {
+    const res = await fetch('/stats');
+    const s = await res.json();
+    el('mActiveMatches').textContent = s.active_matches || 0;
+    el('mTotalEvents').textContent = s.total_events || 0;
+    el('mEventsPerSec').textContent = s.events_per_sec || 0;
+  } catch(e) {}
+  try {
+    const res = await fetch('/chain');
+    const c = await res.json();
+    el('mChainBlocks').textContent = (c.blocks || []).length;
+  } catch(e) {}
+}
+
+async function spawnMatch() {
+  try {
+    await fetch('/match/create', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mode:'bot'}) });
+  } catch(e) {}
+}
+
+async function spawnBatch() {
+  for (let i = 0; i < 5; i++) await spawnMatch();
+}
+
+connectLive();
+fetchLeaderboard();
+fetchStats();
+setInterval(fetchLeaderboard, LEADERBOARD_POLL);
+setInterval(fetchStats, STATS_POLL);
+</script>
+</body>
+</html>
