@@ -18,19 +18,13 @@ export interface AnimFrame {
   ms: number;
 }
 
+export type SpriteKey = "idle" | "attack" | "dodge" | "hit" | "ko";
+
 export interface AnimSequence {
   frames: AnimFrame[];
   loop: boolean;
-  spriteKey: keyof typeof SPRITE_KEY_MAP;
+  spriteKey: SpriteKey;
 }
-
-const SPRITE_KEY_MAP = {
-  idle: "idle",
-  attack: "attack",
-  dodge: "dodge",
-  hit: "hit",
-  ko: "ko",
-} as const;
 
 function f(
   frameIdx: number,

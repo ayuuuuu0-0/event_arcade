@@ -12,7 +12,6 @@ export function useTransparentSprite(src: string): string {
     srcRef.current = src;
 
     if (cache.has(src)) {
-      setProcessed(cache.get(src)!);
       return;
     }
 
@@ -58,5 +57,5 @@ export function useTransparentSprite(src: string): string {
     img.src = src;
   }, [src]);
 
-  return processed || src;
+  return cache.get(src) || processed || src;
 }

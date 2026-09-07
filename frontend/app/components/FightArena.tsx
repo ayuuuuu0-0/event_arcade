@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import type { Character } from "../lib/characters";
 import type { FighterAnimState } from "../lib/animations";
 import FighterSprite from "./FighterSprite";
@@ -24,6 +23,7 @@ interface FightArenaProps {
   screenShake: boolean;
   showImpact: "left" | "right" | null;
   arenaImage: string;
+  countdown?: number | "FIGHT" | null;
 }
 
 export default function FightArena({
@@ -37,19 +37,13 @@ export default function FightArena({
   screenShake,
   showImpact,
   arenaImage,
+  countdown,
 }: FightArenaProps) {
-  const [shakeKey, setShakeKey] = useState(0);
-
-  useEffect(() => {
-    if (screenShake) setShakeKey((k) => k + 1);
-  }, [screenShake]);
-
   const playerPct = Math.max(0, player.hp);
   const opponentPct = Math.max(0, opponent.hp);
 
   return (
     <div
-      key={shakeKey}
       className={`relative w-full rounded-xl overflow-hidden ${
         screenShake ? "arena-shake" : ""
       }`}
@@ -74,6 +68,87 @@ export default function FightArena({
             borderRadius: "50%",
           }}
         />
+      )}
+
+      {countdown !== null && countdown !== undefined && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none select-none bg-black/35 backdrop-blur-[2px]">
+          <div className="flex flex-col items-center mb-2 banner-glow">
+            <span
+              className="text-xs sm:text-sm md:text-base font-black tracking-[0.4em] uppercase text-[#00ffff]"
+              style={{
+                textShadow:
+                  "0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0088ff",
+              }}
+            >
+              ROUND 1
+            </span>
+            <span
+              className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.3em] uppercase text-[#ffff00] mt-0.5"
+              style={{
+                textShadow: "0 0 8px #ffff00, 0 0 16px #ff8800",
+              }}
+            >
+              {countdown === "FIGHT" ? "ENGAGE" : "GET READY"}
+            </span>
+          </div>
+
+          {typeof countdown === "number" ? (
+            <div
+              key={countdown}
+              className="relative flex items-center justify-center countdown-slam"
+            >
+              <div
+                className="absolute w-36 h-36 sm:w-48 sm:h-48 rounded-full opacity-35 blur-xl pointer-events-none"
+                style={{
+                  backgroundColor:
+                    countdown === 3
+                      ? "#ffff00"
+                      : countdown === 2
+                      ? "#ff8800"
+                      : "#ff2244",
+                }}
+              />
+              <div
+                className="text-7xl sm:text-8xl md:text-9xl font-black italic tracking-tighter"
+                style={{
+                  color:
+                    countdown === 3
+                      ? "#ffff00"
+                      : countdown === 2
+                      ? "#ffaa00"
+                      : "#ff3344",
+                  textShadow:
+                    countdown === 3
+                      ? "0 0 20px #ffff00, 0 0 45px #ff8800, 0 0 80px #ff4400"
+                      : countdown === 2
+                      ? "0 0 20px #ffaa00, 0 0 45px #ff5500, 0 0 80px #ff2200"
+                      : "0 0 25px #ff3344, 0 0 50px #ff0044, 0 0 90px #ff0000",
+                  WebkitTextStroke: "2px rgba(255, 255, 255, 0.4)",
+                }}
+              >
+                {countdown}
+              </div>
+            </div>
+          ) : (
+            <div
+              key="fight"
+              className="relative w-full flex items-center justify-center fight-slam"
+            >
+              <div className="absolute inset-x-0 h-16 sm:h-20 bg-gradient-to-r from-transparent via-[#00ff88]/25 to-transparent pointer-events-none" />
+              <div
+                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black italic uppercase tracking-[0.2em]"
+                style={{
+                  color: "#00ff88",
+                  textShadow:
+                    "0 0 20px #00ff88, 0 0 40px #00ffff, 0 0 70px #00ff88, 0 0 100px #00ffff",
+                  WebkitTextStroke: "2px #ffffff",
+                }}
+              >
+                FIGHT!
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="relative z-10 flex flex-col h-full">
@@ -116,7 +191,7 @@ export default function FightArena({
               Match
             </div>
             <div className="text-[var(--cyan)] text-xs font-mono font-bold">
-              {matchId.slice(-8)}
+              {matchId ? matchId.slice(-8) : "STANDBY"}
             </div>
           </div>
 

@@ -75,6 +75,52 @@
       ],
       "previous_hash": "47cdfb0f56d6e832de39870d4f14513b54403cbcdf189ee9bca1c9a7e804ac98",
       "hash": "8912ed44b7a82f0c8c76f9b5eb70e820ca928b48cadd8cdf3a8881220220f292"
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-07T17:30:28.0901338Z",
+      "results": [
+        {
+          "match_id": "match_30a4761265e494f4",
+          "winner_id": "bot_9a0edb30",
+          "loser_id": "bot_9a0edb30"
+        },
+        {
+          "match_id": "match_9e6f14ffc950068d",
+          "winner_id": "bot_1d394862",
+          "loser_id": "bot_1d394862"
+        },
+        {
+          "match_id": "match_c4330cb17aa7916d",
+          "winner_id": "bot_c969467a",
+          "loser_id": "bot_c969467a"
+        }
+      ],
+      "previous_hash": "8912ed44b7a82f0c8c76f9b5eb70e820ca928b48cadd8cdf3a8881220220f292",
+      "hash": "33495b5b527b2dc10702b6800651dfd0c920fdac7bd4b590f081cda3e483b656"
+    },
+    {
+      "index": 5,
+      "timestamp": "2026-09-07T17:31:15.2601761Z",
+      "results": [
+        {
+          "match_id": "match_b3b4ae323a8b2001",
+          "winner_id": "bot_2869dd10",
+          "loser_id": "bot_2869dd10"
+        },
+        {
+          "match_id": "match_c7964e6275cc298b",
+          "winner_id": "bot_d0dd02b7",
+          "loser_id": "bot_d0dd02b7"
+        },
+        {
+          "match_id": "match_6b71c17d3b0357d6",
+          "winner_id": "player_crimson_fang_mtrioo99",
+          "loser_id": "bot_736c42da"
+        }
+      ],
+      "previous_hash": "33495b5b527b2dc10702b6800651dfd0c920fdac7bd4b590f081cda3e483b656",
+      "hash": "170bebcdfd93360441d85cd543d9da9a463542f5d2ede0b797c72b38ecc798b2"
     }
   ]
 }

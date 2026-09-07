@@ -7,10 +7,29 @@ import type { FighterAnimState } from "../lib/animations";
 import { getRandomCharacter } from "../lib/characters";
 import { getRandomArena } from "../lib/arenas";
 import { createMatch, connectLiveWS, connectPlayerWS } from "../lib/api";
+import { playCountdownBeep, playFightSound } from "../lib/sound";
 import CharacterSelect from "../components/CharacterSelect";
 import FightArena from "../components/FightArena";
 
-type Phase = "select" | "fighting" | "ended";
+type Phase = "select" | "countdown" | "fighting" | "ended";
+
+function preloadImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve();
+      return;
+    }
+    const img = new window.Image();
+    if (img.complete) {
+      resolve();
+      return;
+    }
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = src;
+    setTimeout(resolve, 600);
+  });
+}
 
 const ACTION_KEYS: Record<string, string> = {
   a: "hit",
@@ -29,6 +48,7 @@ const ANIM_DURATION = 600;
 
 export default function PlayPage() {
   const [phase, setPhase] = useState<Phase>("select");
+  const [countdown, setCountdown] = useState<number | "FIGHT" | null>(null);
   const [playerChar, setPlayerChar] = useState<Character | null>(null);
   const [opponentChar, setOpponentChar] = useState<Character | null>(null);
   const [matchId, setMatchId] = useState("");
@@ -53,6 +73,18 @@ export default function PlayPage() {
   const playerIdRef = useRef("");
   const playerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const opponentTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimersRef = useRef<NodeJS.Timeout[]>([]);
+
+  const clearCountdownTimers = useCallback(() => {
+    countdownTimersRef.current.forEach((t) => clearTimeout(t));
+    countdownTimersRef.current = [];
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearCountdownTimers();
+    };
+  }, [clearCountdownTimers]);
 
   const addLog = useCallback((msg: string, type = "") => {
     setLog((prev) => [{ msg, type }, ...prev].slice(0, 60));
@@ -168,6 +200,22 @@ export default function PlayPage() {
     return disconnect;
   }, [handleLiveEvent]);
 
+  const ACTION_COOLDOWN_MS = 500;
+
+  const sendAction = useCallback(
+    (action: string) => {
+      if (!playerWS.current || !matchIdRef.current || actionCooldown) return;
+      setActionCooldown(true);
+      setTimeout(() => setActionCooldown(false), ACTION_COOLDOWN_MS);
+      playerWS.current.send({
+        match_id: matchIdRef.current,
+        player_id: playerIdRef.current,
+        action,
+      });
+    },
+    [actionCooldown]
+  );
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (phase !== "fighting" || !wsConnected) return;
@@ -176,13 +224,15 @@ export default function PlayPage() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  });
+  }, [phase, wsConnected, sendAction]);
 
   const handleCharacterSelect = async (char: Character) => {
+    clearCountdownTimers();
     setPlayerChar(char);
     const opp = getRandomCharacter(char.id);
     setOpponentChar(opp);
-    setArenaImage(getRandomArena().image);
+    const arena = getRandomArena();
+    setArenaImage(arena.image);
 
     const pid = `player_${char.id}_${Date.now().toString(36)}`;
     setPlayerId(pid);
@@ -191,52 +241,71 @@ export default function PlayPage() {
     addLog(`You chose ${char.name}`, "info");
     addLog(`Opponent: ${opp.name} — ${opp.title}`, "info");
 
-    try {
-      const res = await createMatch("player", pid);
-      if (res.error) {
-        addLog(`error: ${res.error}`, "error");
-        return;
-      }
+    const preloadPromises = [preloadImage(arena.image)];
+    if (char.sprites.idle[0]) preloadPromises.push(preloadImage(char.sprites.idle[0]));
+    if (opp.sprites.idle[0]) preloadPromises.push(preloadImage(opp.sprites.idle[0]));
+    await Promise.all(preloadPromises);
 
-      setMatchId(res.match_id);
-      matchIdRef.current = res.match_id;
-      setOpponentId(res.player_b);
-      setPlayerHP(100);
-      setOpponentHP(100);
-      setPlayerAnim("idle");
-      setOpponentAnim("idle");
-      setPhase("fighting");
+    setPlayerHP(100);
+    setOpponentHP(100);
+    setPlayerAnim("idle");
+    setOpponentAnim("idle");
+    setPhase("countdown");
+    setCountdown(3);
+    playCountdownBeep(3);
+
+    const t1 = setTimeout(() => {
+      setCountdown(2);
+      playCountdownBeep(2);
+    }, 1000);
+
+    const t2 = setTimeout(() => {
+      setCountdown(1);
+      playCountdownBeep(1);
+    }, 2000);
+
+    const t3 = setTimeout(async () => {
+      setCountdown("FIGHT");
+      playFightSound();
       addLog("FIGHT!", "match_end");
 
-      playerWS.current?.close();
-      playerWS.current = connectPlayerWS(
-        (data) => {
-          if (data.error) addLog(`ws: ${data.error}`, "error");
-        },
-        setWsConnected
-      );
-    } catch (e) {
-      addLog(`connection error: ${e}`, "error");
-    }
+      try {
+        const res = await createMatch("player", pid);
+        if (res.error) {
+          addLog(`error: ${res.error}`, "error");
+          setPhase("select");
+          setCountdown(null);
+          return;
+        }
+
+        setMatchId(res.match_id);
+        matchIdRef.current = res.match_id;
+        setOpponentId(res.player_b);
+        setPhase("fighting");
+
+        playerWS.current?.close();
+        playerWS.current = connectPlayerWS(
+          (data) => {
+            if (data.error) addLog(`ws: ${data.error}`, "error");
+          },
+          setWsConnected
+        );
+      } catch (e) {
+        addLog(`connection error: ${e}`, "error");
+      }
+
+      const t4 = setTimeout(() => {
+        setCountdown(null);
+      }, 800);
+      countdownTimersRef.current.push(t4);
+    }, 3000);
+
+    countdownTimersRef.current.push(t1, t2, t3);
   };
 
-  const ACTION_COOLDOWN_MS = 500;
-
-  const sendAction = useCallback(
-    (action: string) => {
-      if (!playerWS.current || !matchId || actionCooldown) return;
-      setActionCooldown(true);
-      setTimeout(() => setActionCooldown(false), ACTION_COOLDOWN_MS);
-      playerWS.current.send({
-        match_id: matchId,
-        player_id: playerId,
-        action,
-      });
-    },
-    [matchId, playerId, actionCooldown]
-  );
-
   const handleRematch = () => {
+    clearCountdownTimers();
+    setCountdown(null);
     playerWS.current?.close();
     playerWS.current = null;
     setPhase("select");
@@ -291,7 +360,7 @@ export default function PlayPage() {
           }}
           matchId={matchId}
           onAction={sendAction}
-          actionsDisabled={!wsConnected || actionCooldown}
+          actionsDisabled={phase === "countdown" || !wsConnected || actionCooldown}
           matchEnded={phase === "ended"}
           winner={
             winner === playerId
@@ -303,6 +372,7 @@ export default function PlayPage() {
           screenShake={screenShake}
           showImpact={showImpact}
           arenaImage={arenaImage}
+          countdown={countdown}
         />
       )}
 
