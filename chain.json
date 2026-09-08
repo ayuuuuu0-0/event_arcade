@@ -121,6 +121,65 @@
       ],
       "previous_hash": "33495b5b527b2dc10702b6800651dfd0c920fdac7bd4b590f081cda3e483b656",
       "hash": "170bebcdfd93360441d85cd543d9da9a463542f5d2ede0b797c72b38ecc798b2"
+    },
+    {
+      "index": 6,
+      "timestamp": "2026-09-08T15:31:28.3006881Z",
+      "results": [
+        {
+          "match_id": "match_8cf88d3a35e3c0d6",
+          "winner_id": "bot_830f9ef4",
+          "loser_id": "bot_830f9ef4"
+        },
+        {
+          "match_id": "match_00b1aac64fcee155",
+          "winner_id": "bot_e092ac36",
+          "loser_id": "bot_e092ac36"
+        },
+        {
+          "match_id": "match_9b61edcb46a37afb",
+          "winner_id": "bot_79a5e40d",
+          "loser_id": "bot_79a5e40d"
+        }
+      ],
+      "previous_hash": "170bebcdfd93360441d85cd543d9da9a463542f5d2ede0b797c72b38ecc798b2",
+      "hash": "efec74739e55b187b849199ca7e2181e10cf36dfcd7ccd0a7cbb2c32e497f030"
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-08T15:32:04.4204268Z",
+      "results": [
+        {
+          "match_id": "match_2c000b446ed9f721",
+          "winner_id": "bot_a0f4cfb6",
+          "loser_id": "bot_a0f4cfb6"
+        },
+        {
+          "match_id": "match_12539dac5edb75a7",
+          "winner_id": "bot_d5ebd946",
+          "loser_id": "bot_d5ebd946"
+        },
+        {
+          "match_id": "match_74b10e8c76c23935",
+          "winner_id": "bot_6787f5d3",
+          "loser_id": "player_iron_vex_mtstva7w"
+        }
+      ],
+      "previous_hash": "efec74739e55b187b849199ca7e2181e10cf36dfcd7ccd0a7cbb2c32e497f030",
+      "hash": "189eb229e81b03f77ccf15564129c43bc4c44a47bbb76b6de753e718cbe0a4f5"
+    },
+    {
+      "index": 8,
+      "timestamp": "2026-09-08T15:53:10.2659849Z",
+      "results": [
+        {
+          "match_id": "match_4564c834850a1dbc",
+          "winner_id": "player_crimson_fang_mtstvjuk",
+          "loser_id": "bot_49d8d6b1"
+        }
+      ],
+      "previous_hash": "189eb229e81b03f77ccf15564129c43bc4c44a47bbb76b6de753e718cbe0a4f5",
+      "hash": "d29a87478cc7f38614d715212cb73c5f64d4d74f052a4dc69b529197679a87a3"
     }
   ]
 }

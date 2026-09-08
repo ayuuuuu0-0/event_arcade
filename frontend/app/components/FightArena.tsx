@@ -71,23 +71,16 @@ export default function FightArena({
       )}
 
       {countdown !== null && countdown !== undefined && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none select-none bg-black/35 backdrop-blur-[2px]">
-          <div className="flex flex-col items-center mb-2 banner-glow">
-            <span
-              className="text-xs sm:text-sm md:text-base font-black tracking-[0.4em] uppercase text-[#00ffff]"
-              style={{
-                textShadow:
-                  "0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #0088ff",
-              }}
-            >
-              ROUND 1
-            </span>
-            <span
-              className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.3em] uppercase text-[#ffff00] mt-0.5"
-              style={{
-                textShadow: "0 0 8px #ffff00, 0 0 16px #ff8800",
-              }}
-            >
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none select-none bg-black/40 backdrop-blur-[2px]">
+          <div className="flex flex-col items-center mb-3 sm:mb-4 banner-glow">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="h-[2px] sm:h-[3px] w-8 sm:w-16 md:w-24 bg-gradient-to-r from-transparent via-amber-400 to-yellow-200" />
+              <span className="font-arcade text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black italic tracking-[0.25em] uppercase arcade-round-3d">
+                ROUND 1
+              </span>
+              <div className="h-[2px] sm:h-[3px] w-8 sm:w-16 md:w-24 bg-gradient-to-l from-transparent via-amber-400 to-yellow-200" />
+            </div>
+            <span className="font-arcade text-xs sm:text-sm md:text-base font-black tracking-[0.35em] uppercase mt-1 arcade-ready-glow">
               {countdown === "FIGHT" ? "ENGAGE" : "GET READY"}
             </span>
           </div>
@@ -97,35 +90,8 @@ export default function FightArena({
               key={countdown}
               className="relative flex items-center justify-center countdown-slam"
             >
-              <div
-                className="absolute w-36 h-36 sm:w-48 sm:h-48 rounded-full opacity-35 blur-xl pointer-events-none"
-                style={{
-                  backgroundColor:
-                    countdown === 3
-                      ? "#ffff00"
-                      : countdown === 2
-                      ? "#ff8800"
-                      : "#ff2244",
-                }}
-              />
-              <div
-                className="text-7xl sm:text-8xl md:text-9xl font-black italic tracking-tighter"
-                style={{
-                  color:
-                    countdown === 3
-                      ? "#ffff00"
-                      : countdown === 2
-                      ? "#ffaa00"
-                      : "#ff3344",
-                  textShadow:
-                    countdown === 3
-                      ? "0 0 20px #ffff00, 0 0 45px #ff8800, 0 0 80px #ff4400"
-                      : countdown === 2
-                      ? "0 0 20px #ffaa00, 0 0 45px #ff5500, 0 0 80px #ff2200"
-                      : "0 0 25px #ff3344, 0 0 50px #ff0044, 0 0 90px #ff0000",
-                  WebkitTextStroke: "2px rgba(255, 255, 255, 0.4)",
-                }}
-              >
+              <div className="absolute w-40 h-40 sm:w-56 sm:h-56 rounded-full opacity-35 blur-2xl pointer-events-none bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600" />
+              <div className="font-arcade text-8xl sm:text-9xl md:text-[10rem] font-black italic tracking-wider arcade-gold-3d">
                 {countdown}
               </div>
             </div>
@@ -134,16 +100,9 @@ export default function FightArena({
               key="fight"
               className="relative w-full flex items-center justify-center fight-slam"
             >
-              <div className="absolute inset-x-0 h-16 sm:h-20 bg-gradient-to-r from-transparent via-[#00ff88]/25 to-transparent pointer-events-none" />
-              <div
-                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black italic uppercase tracking-[0.2em]"
-                style={{
-                  color: "#00ff88",
-                  textShadow:
-                    "0 0 20px #00ff88, 0 0 40px #00ffff, 0 0 70px #00ff88, 0 0 100px #00ffff",
-                  WebkitTextStroke: "2px #ffffff",
-                }}
-              >
+              <div className="absolute inset-x-0 h-20 sm:h-24 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-yellow-300 to-transparent pointer-events-none" />
+              <div className="font-arcade text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black italic uppercase tracking-[0.18em] arcade-fight-3d">
                 FIGHT!
               </div>
             </div>
@@ -258,17 +217,10 @@ export default function FightArena({
 
           {matchEnded && (
             <div className="flex-1 text-center pb-4">
-              <div
-                className="text-4xl font-bold uppercase tracking-[0.3em]"
-                style={{
-                  color: "#ffff00",
-                  textShadow:
-                    "0 0 20px #ffff00, 0 0 40px #ff8800, 0 0 60px #ff4400",
-                }}
-              >
+              <div className="font-arcade text-5xl sm:text-6xl font-black italic uppercase tracking-[0.25em] arcade-fight-3d">
                 K.O.
               </div>
-              <div className="text-white text-lg font-bold mt-1">
+              <div className="font-arcade text-amber-200 text-lg sm:text-xl font-bold tracking-widest mt-1">
                 {winner} WINS!
               </div>
             </div>
